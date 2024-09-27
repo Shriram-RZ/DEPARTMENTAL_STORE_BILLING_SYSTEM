@@ -1,15 +1,19 @@
-CREATE DATABASE store_db;
+-- Create database if it doesn't exist
+CREATE DATABASE IF NOT EXISTS store_db;
 
+-- Use the database
 USE store_db;
 
-CREATE TABLE users (
+-- Create 'users' table if it doesn't exist
+CREATE TABLE IF NOT EXISTS users (
     id INT AUTO_INCREMENT PRIMARY KEY,
     username VARCHAR(50) NOT NULL,
     password VARCHAR(50) NOT NULL,
     role ENUM('Admin', 'Store Manager', 'Cashier') NOT NULL
 );
 
-CREATE TABLE inventory (
+-- Create 'inventory' table if it doesn't exist
+CREATE TABLE IF NOT EXISTS inventory (
     id INT AUTO_INCREMENT PRIMARY KEY,
     item_code VARCHAR(50) NOT NULL,
     item_name VARCHAR(100) NOT NULL,
@@ -17,29 +21,21 @@ CREATE TABLE inventory (
     quantity INT NOT NULL
 );
 
-USE store_db;
-
--- Inserting Admin User
-INSERT INTO users (username, password, role) 
-VALUES ('admin', 'admin123', 'Admin');
-
-CREATE INDEX idx_item_code ON inventory(item_code);
-
-ALTER TABLE inventory MODIFY item_code VARCHAR(20);
-ALTER TABLE sales MODIFY item_code VARCHAR(20);
-
-ALTER TABLE sales
-ADD CONSTRAINT fk_sales_inventory
-FOREIGN KEY (item_code) REFERENCES inventory(item_code);
-CREATE TABLE inventory (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    item_code VARCHAR(50) NOT NULL,
-    item_name VARCHAR(100) NOT NULL,
-    quantity INT NOT NULL,
-    price DOUBLE NOT NULL
+-- Insert Admin User only if not already present
+INSERT INTO users (username, password, role)
+SELECT 'admin', 'admin123', 'Admin'
+WHERE NOT EXISTS (
+    SELECT 1 FROM users WHERE username = 'admin'
 );
 
-CREATE TABLE sales (
+-- Create index for 'item_code' in 'inventory' table if it doesn't exist
+CREATE INDEX IF NOT EXISTS idx_item_code ON inventory(item_code);
+
+-- Modify the 'item_code' column in 'inventory' table
+ALTER TABLE inventory MODIFY item_code VARCHAR(20);
+
+-- Create 'sales' table if it doesn't exist
+CREATE TABLE IF NOT EXISTS sales (
     id INT AUTO_INCREMENT PRIMARY KEY,
     item_code VARCHAR(50) NOT NULL,
     item_name VARCHAR(100) NOT NULL,
@@ -49,4 +45,10 @@ CREATE TABLE sales (
     cashier_username VARCHAR(50) NOT NULL
 );
 
+-- Modify the 'item_code' column in 'sales' table
+ALTER TABLE sales MODIFY item_code VARCHAR(20);
 
+-- Add a foreign key to link 'sales' table with 'inventory' table
+ALTER TABLE sales
+ADD CONSTRAINT fk_sales_inventory
+FOREIGN KEY (item_code) REFERENCES inventory(item_code);
