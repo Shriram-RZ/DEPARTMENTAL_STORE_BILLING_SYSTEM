@@ -1,6 +1,8 @@
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.sql.*;
+import java.util.ArrayList;
 
 public class AdminDashboard extends JFrame {
     private User user;
@@ -41,13 +43,21 @@ public class AdminDashboard extends JFrame {
 
         JButton databaseDetailsBtn = new JButton("Database Details");
         databaseDetailsBtn.addActionListener(e -> fetchDatabaseDetails());
-        
+
         // New button for inventory details
         JButton inventoryDetailsBtn = new JButton("Inventory Details");
         inventoryDetailsBtn.addActionListener(e -> fetchInventoryDetails());
 
         JButton userDetailsBtn = new JButton("User Details and Roles");
         userDetailsBtn.addActionListener(e -> fetchUserDetails());
+
+        // Button for adding users
+        JButton addUserBtn = new JButton("Add User");
+        addUserBtn.addActionListener(e -> addUser());
+
+        // Button for deleting users
+        JButton deleteUserBtn = new JButton("Delete User");
+        deleteUserBtn.addActionListener(e -> deleteUser());
 
         JButton logoutBtn = new JButton("Logout");
         logoutBtn.addActionListener(e -> logout());
@@ -57,6 +67,8 @@ public class AdminDashboard extends JFrame {
         buttonPanel.add(databaseDetailsBtn);
         buttonPanel.add(inventoryDetailsBtn);
         buttonPanel.add(userDetailsBtn);
+        buttonPanel.add(addUserBtn);
+        buttonPanel.add(deleteUserBtn);
         buttonPanel.add(logoutBtn);
 
         mainPanel.add(buttonPanel, BorderLayout.CENTER);
@@ -131,87 +143,82 @@ public class AdminDashboard extends JFrame {
     }
 
     private String[][] getSalesReports() {
-        try (Connection conn = DatabaseConnection.getConnection()) {
-            String query = "SELECT * FROM sales ORDER BY sale_date DESC";
-            PreparedStatement stmt = conn.prepareStatement(query, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
-            ResultSet rs = stmt.executeQuery();
+    try (Connection conn = DatabaseConnection.getConnection()) {
+        String query = "SELECT * FROM sales ORDER BY sale_date DESC";
+        PreparedStatement stmt = conn.prepareStatement(query);
+        ResultSet rs = stmt.executeQuery();
 
-            // Move the cursor to the last row to get the row count
-            rs.last();
-            int rowCount = rs.getRow();
-            rs.beforeFirst(); // Move back to the start
-
-            // Create data array
-            String[][] salesData = new String[rowCount][7];
-            int index = 0;
-
-            while (rs.next()) {
-                salesData[index][0] = String.valueOf(rs.getInt("id"));
-                salesData[index][1] = rs.getString("item_code");
-                salesData[index][2] = rs.getString("item_name");
-                salesData[index][3] = String.valueOf(rs.getInt("quantity"));
-                salesData[index][4] = String.format("$%.2f", rs.getDouble("total"));
-                salesData[index][5] = rs.getTimestamp("sale_date").toString();
-                salesData[index][6] = rs.getString("cashier_username");
-                index++;
-            }
-            return salesData;
-        } catch (SQLException e) {
-            showError("Failed to fetch sales reports: " + e.getMessage());
-            return new String[0][0]; // Return an empty array in case of error
+        // Collecting data
+        ArrayList<String[]> salesDataList = new ArrayList<>();
+        
+        while (rs.next()) {
+            String[] row = new String[7];
+            row[0] = String.valueOf(rs.getInt("id"));
+            row[1] = rs.getString("item_code");
+            row[2] = rs.getString("item_name");
+            row[3] = String.valueOf(rs.getInt("quantity"));
+            row[4] = String.format("$%.2f", rs.getDouble("total"));
+            row[5] = rs.getTimestamp("sale_date").toString();
+            row[6] = rs.getString("cashier_username");
+            salesDataList.add(row);
         }
+        
+        // Convert ArrayList to String[][]
+        return salesDataList.toArray(new String[salesDataList.size()][]);
+    } catch (SQLException e) {
+        showError("Failed to fetch sales reports: " + e.getMessage());
+        return new String[0][0]; // Return an empty array in case of error
     }
+}
 
     private void fetchDatabaseDetails() {
         String details = getDatabaseDetails();
         JOptionPane.showMessageDialog(this, details, "Database Details", JOptionPane.INFORMATION_MESSAGE);
     }
-    
-    // New method to fetch and display inventory details
+
     private void fetchInventoryDetails() {
         String[][] inventoryData = getInventoryDetails();
-        String[] columnNames = { "ID", "Item Code", "Item Name", "Price", "Quantity" };
+        String[] columnNames = { "Item Code", "Item Name", "Quantity", "Price" };
 
-        // Create a JTable to display the inventory
+        // Create a JTable to display the inventory details
         JTable inventoryTable = new JTable(inventoryData, columnNames);
         inventoryTable.setFillsViewportHeight(true);
         inventoryTable.setDefaultEditor(Object.class, null); // Make the table read-only
 
         // Add a scroll pane to the table
         JScrollPane scrollPane = new JScrollPane(inventoryTable);
-        scrollPane.setPreferredSize(new Dimension(750, 400));
+        scrollPane.setPreferredSize(new Dimension(600, 300));
 
         // Display the table in a dialog
         JOptionPane.showMessageDialog(this, scrollPane, "Inventory Details", JOptionPane.INFORMATION_MESSAGE);
     }
 
-    private String[][] getInventoryDetails() {
-        try (Connection conn = DatabaseConnection.getConnection()) {
-            String query = "SELECT * FROM inventory"; // Query to fetch inventory details
-            PreparedStatement stmt = conn.prepareStatement(query);
-            ResultSet rs = stmt.executeQuery();
+   
+private String[][] getInventoryDetails() {
+    try (Connection conn = DatabaseConnection.getConnection()) {
+        String query = "SELECT item_code, item_name, quantity, price FROM inventory"; // Query to fetch inventory details
+        PreparedStatement stmt = conn.prepareStatement(query);
+        ResultSet rs = stmt.executeQuery();
 
-            // Create a list to hold inventory data
-            java.util.List<String[]> inventoryList = new java.util.ArrayList<>();
-
-            while (rs.next()) {
-                String[] row = new String[5];
-                row[0] = String.valueOf(rs.getInt("id"));
-                row[1] = rs.getString("item_code");
-                row[2] = rs.getString("item_name");
-                row[3] = String.format("$%.2f", rs.getDouble("price"));
-                row[4] = String.valueOf(rs.getInt("quantity"));
-                inventoryList.add(row);
-            }
-
-            // Convert the list to a 2D array
-            String[][] inventoryData = new String[inventoryList.size()][5];
-            return inventoryList.toArray(inventoryData);
-        } catch (SQLException e) {
-            showError("Failed to fetch inventory details: " + e.getMessage());
-            return new String[0][0]; // Return an empty array in case of error
+        // Collecting data
+        ArrayList<String[]> inventoryDataList = new ArrayList<>();
+        
+        while (rs.next()) {
+            String[] row = new String[4];
+            row[0] = rs.getString("item_code");
+            row[1] = rs.getString("item_name");
+            row[2] = String.valueOf(rs.getInt("quantity"));
+            row[3] = String.format("$%.2f", rs.getDouble("price"));
+            inventoryDataList.add(row);
         }
+        
+        // Convert ArrayList to String[][]
+        return inventoryDataList.toArray(new String[inventoryDataList.size()][]);
+    } catch (SQLException e) {
+        showError("Failed to fetch inventory details: " + e.getMessage());
+        return new String[0][0]; // Return an empty array in case of error
     }
+}
 
     private void fetchUserDetails() {
         String[][] userDetails = getUserDetails();
@@ -224,52 +231,140 @@ public class AdminDashboard extends JFrame {
 
         // Add a scroll pane to the table
         JScrollPane scrollPane = new JScrollPane(userTable);
-        scrollPane.setPreferredSize(new Dimension(750, 400));
+        scrollPane.setPreferredSize(new Dimension(600, 300));
 
         // Display the table in a dialog
         JOptionPane.showMessageDialog(this, scrollPane, "User Details", JOptionPane.INFORMATION_MESSAGE);
     }
 
     private String[][] getUserDetails() {
-        try (Connection conn = DatabaseConnection.getConnection()) {
+        try (Connection conn = DatabaseConnection.getConnection();
+             Statement stmt = conn.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY)) { // Modified to allow scrolling
+             
             String query = "SELECT * FROM users"; // Query to fetch user details
-            PreparedStatement stmt = conn.prepareStatement(query);
-            ResultSet rs = stmt.executeQuery();
-
-            // Create a list to hold user data
-            java.util.List<String[]> userList = new java.util.ArrayList<>();
-
+            ResultSet rs = stmt.executeQuery(query);
+    
+            // Get row count
+            rs.last();
+            int rowCount = rs.getRow();
+            rs.beforeFirst(); // Move cursor back to before the first row
+    
+            // Create data array
+            String[][] userDetails = new String[rowCount][3];
+            int index = 0;
+    
             while (rs.next()) {
-                String[] row = new String[3];
-                row[0] = String.valueOf(rs.getInt("id"));
-                row[1] = rs.getString("username");
-                row[2] = rs.getString("role");
-                userList.add(row);
+                userDetails[index][0] = String.valueOf(rs.getInt("id"));
+                userDetails[index][1] = rs.getString("username");
+                userDetails[index][2] = rs.getString("role");
+                index++;
             }
-
-            // Convert the list to a 2D array
-            String[][] userData = new String[userList.size()][3];
-            return userList.toArray(userData);
+            return userDetails;
         } catch (SQLException e) {
             showError("Failed to fetch user details: " + e.getMessage());
             return new String[0][0]; // Return an empty array in case of error
         }
     }
+    
 
-    private void logout() {
-        // Logic to handle user logout
-        JOptionPane.showMessageDialog(this, "You have logged out.", "Logout", JOptionPane.INFORMATION_MESSAGE);
-        dispose(); // Close the dashboard
+    private void addUser() {
+        JTextField usernameField = new JTextField(15);
+        JPasswordField passwordField = new JPasswordField(15);
+        String[] roles = {"Admin", "Store Manager", "Cashier"};
+        JComboBox<String> roleComboBox = new JComboBox<>(roles);
+
+        JPanel panel = new JPanel();
+        panel.add(new JLabel("Username:"));
+        panel.add(usernameField);
+        panel.add(Box.createHorizontalStrut(15)); // a spacer
+        panel.add(new JLabel("Password:"));
+        panel.add(passwordField);
+        panel.add(Box.createHorizontalStrut(15)); // a spacer
+        panel.add(new JLabel("Role:"));
+        panel.add(roleComboBox);
+
+        int result = JOptionPane.showConfirmDialog(this, panel, "Add User", JOptionPane.OK_CANCEL_OPTION);
+        if (result == JOptionPane.OK_OPTION) {
+            String username = usernameField.getText();
+            String password = new String(passwordField.getPassword());
+            String role = (String) roleComboBox.getSelectedItem();
+            if (addUserToDatabase(username, password, role)) {
+                JOptionPane.showMessageDialog(this, "User added successfully.", "Success", JOptionPane.INFORMATION_MESSAGE);
+            } else {
+                showError("Failed to add user.");
+            }
+        }
+    }
+
+    private boolean addUserToDatabase(String username, String password, String role) {
+        String query = "INSERT INTO users (username, password, role) VALUES (?, ?, ?)";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+            stmt.setString(1, username);
+            stmt.setString(2, password); // Use hashing for real applications
+            stmt.setString(3, role);
+            stmt.executeUpdate();
+            return true;
+        } catch (SQLException e) {
+            showError("Failed to add user: " + e.getMessage());
+            return false;
+        }
+    }
+
+    private void deleteUser() {
+        String username = JOptionPane.showInputDialog(this, "Enter username to delete:");
+        if (username != null && !username.trim().isEmpty()) {
+            int confirmation = JOptionPane.showConfirmDialog(this, "Are you sure you want to delete user: " + username + "?", "Confirm Delete", JOptionPane.YES_NO_OPTION);
+            if (confirmation == JOptionPane.YES_OPTION) {
+                if (deleteUserFromDatabase(username)) {
+                    JOptionPane.showMessageDialog(this, "User deleted successfully.", "Success", JOptionPane.INFORMATION_MESSAGE);
+                } else {
+                    showError("Failed to delete user.");
+                }
+            }
+        }
+    }
+
+    private boolean deleteUserFromDatabase(String username) {
+        String query = "DELETE FROM users WHERE username = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+            stmt.setString(1, username);
+            int rowsAffected = stmt.executeUpdate();
+            return rowsAffected > 0; // Return true if a row was deleted
+        } catch (SQLException e) {
+            showError("Failed to delete user: " + e.getMessage());
+            return false;
+        }
     }
 
     private String getDatabaseDetails() {
-        // Dummy method to return database details
-        return "Database is running smoothly.\nVersion: 1.0.0\nConnected to: Localhost";
+        // This method can return the database version or other relevant information
+        try (Connection conn = DatabaseConnection.getConnection()) {
+            DatabaseMetaData metaData = conn.getMetaData();
+            String dbDetails = "Database Name: " + metaData.getDatabaseProductName() + "\n"
+                    + "Database Version: " + metaData.getDatabaseProductVersion();
+            return dbDetails;
+        } catch (SQLException e) {
+            return "Failed to fetch database details: " + e.getMessage();
+        }
+    }
+
+    private void logout() {
+        int response = JOptionPane.showConfirmDialog(this, "Are you sure you want to log out?", "Confirm Logout", JOptionPane.YES_NO_OPTION);
+        if (response == JOptionPane.YES_OPTION) {
+            dispose(); // Close the current window
+            new LoginPage(); // Open the login page (assumes LoginPage class exists)
+        }
     }
 
     private void showError(String message) {
         JOptionPane.showMessageDialog(this, message, "Error", JOptionPane.ERROR_MESSAGE);
     }
 
-    
+    public static void main(String[] args) {
+        // Example User for testing purposes
+        User testUser = new User("admin", "Admin");
+        new AdminDashboard(testUser);
+    }
 }
