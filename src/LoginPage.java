@@ -9,7 +9,7 @@ public class LoginPage extends JFrame {
     private JComboBox<String> roleBox;
 
     public LoginPage() {
-        setTitle("Login - Departmental Store");
+        setTitle("SASIKALA DEPARTMENTAL STORES");
         setSize(400, 300);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);

@@ -30,7 +30,5 @@ public class GenerateReports extends JFrame {
     }
 
     private void generateReport(String reportType) {
-        // Logic to generate the specific report (daily, weekly, monthly)
-        // This would typically involve querying sales records from the database.
     }
 }

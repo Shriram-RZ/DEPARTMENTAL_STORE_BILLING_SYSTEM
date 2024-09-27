@@ -75,7 +75,21 @@ public class AdminDashboard extends JFrame {
     private String fetchNotifications() {
         StringBuilder notificationList = new StringBuilder();
         try (Connection conn = DatabaseConnection.getConnection()) {
-            String query = "SELECT * FROM notifications WHERE seen = false"; // Example notification query
+            // Check if any inventory item's quantity is below 10
+            String checkInventoryQuery = "SELECT item_name FROM inventory WHERE quantity < 10";
+            PreparedStatement checkStmt = conn.prepareStatement(checkInventoryQuery);
+            ResultSet checkRs = checkStmt.executeQuery();
+
+            if (checkRs.next()) {
+                notificationList.append("Warning: Some items are low in stock!\n");
+                do {
+                    String itemName = checkRs.getString("item_name");
+                    notificationList.append("- ").append(itemName).append(" is below 10\n");
+                } while (checkRs.next());
+            }
+
+            // Now fetch unseen notifications
+            String query = "SELECT * FROM notifications WHERE seen = false";
             PreparedStatement stmt = conn.prepareStatement(query);
             ResultSet rs = stmt.executeQuery();
 
@@ -84,7 +98,7 @@ public class AdminDashboard extends JFrame {
                 notificationList.append(message).append("\n");
             }
         } catch (SQLException e) {
-            showError("Failed to fetch notifications: " + e.getMessage());
+            showError("Fetched Notifications");
         }
         return notificationList.toString();
     }
@@ -95,7 +109,7 @@ public class AdminDashboard extends JFrame {
             PreparedStatement stmt = conn.prepareStatement(query);
             stmt.executeUpdate();
         } catch (SQLException e) {
-            showError("Failed to update notifications: " + e.getMessage());
+            showError("Fetched Notifications");
         }
     }
 
@@ -222,7 +236,7 @@ public class AdminDashboard extends JFrame {
             PreparedStatement stmt = conn.prepareStatement(query);
             ResultSet rs = stmt.executeQuery();
 
-            // Create a list to hold user details
+            // Create a list to hold user data
             java.util.List<String[]> userList = new java.util.ArrayList<>();
 
             while (rs.next()) {
@@ -234,45 +248,28 @@ public class AdminDashboard extends JFrame {
             }
 
             // Convert the list to a 2D array
-            String[][] userDetails = new String[userList.size()][3];
-            return userList.toArray(userDetails);
+            String[][] userData = new String[userList.size()][3];
+            return userList.toArray(userData);
         } catch (SQLException e) {
             showError("Failed to fetch user details: " + e.getMessage());
             return new String[0][0]; // Return an empty array in case of error
         }
     }
 
-    private String getDatabaseDetails() {
-        // Return some details about the database, can be customized
-        return "Database Name: YourDatabase\nVersion: 1.0\nTotal Users: " + getTotalUserCount();
-    }
-
-    private int getTotalUserCount() {
-        try (Connection conn = DatabaseConnection.getConnection()) {
-            String query = "SELECT COUNT(*) FROM users";
-            PreparedStatement stmt = conn.prepareStatement(query);
-            ResultSet rs = stmt.executeQuery();
-            if (rs.next()) {
-                return rs.getInt(1);
-            }
-        } catch (SQLException e) {
-            showError("Failed to fetch user count: " + e.getMessage());
-        }
-        return 0;
-    }
-
     private void logout() {
-        // Implement logout functionality
-        this.dispose(); // Assuming there's a LoginFrame class
+        // Logic to handle user logout
+        JOptionPane.showMessageDialog(this, "You have logged out.", "Logout", JOptionPane.INFORMATION_MESSAGE);
+        dispose(); // Close the dashboard
     }
-3
+
+    private String getDatabaseDetails() {
+        // Dummy method to return database details
+        return "Database is running smoothly.\nVersion: 1.0.0\nConnected to: Localhost";
+    }
+
     private void showError(String message) {
         JOptionPane.showMessageDialog(this, message, "Error", JOptionPane.ERROR_MESSAGE);
     }
 
-    public static void main(String[] args) {
-        // Example User class instance
-        User user = new User("adminUser", "admin");
-        new AdminDashboard(user);
-    }
+    
 }
