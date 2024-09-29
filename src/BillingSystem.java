@@ -334,7 +334,7 @@ public class BillingSystem extends JFrame {
 
         // Add Total Amount Section
         Paragraph totalAmount = new Paragraph(
-            String.format("Subtotal: $%.2f\nTotal: $%.2f", subTotal, totalCost),
+            String.format("Total: $%.2f", subTotal),
             FontFactory.getFont(FontFactory.HELVETICA, 12, Font.BOLD)
         );
         totalAmount.setAlignment(Element.ALIGN_RIGHT);
