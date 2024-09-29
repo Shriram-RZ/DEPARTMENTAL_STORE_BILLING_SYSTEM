@@ -110,7 +110,7 @@ public class AdminDashboard extends JFrame {
                 notificationList.append(message).append("\n");
             }
         } catch (SQLException e) {
-            showError("Fetched Notifications");
+            showError("Click OK to get notifications");
         }
         return notificationList.toString();
     }
@@ -121,7 +121,7 @@ public class AdminDashboard extends JFrame {
             PreparedStatement stmt = conn.prepareStatement(query);
             stmt.executeUpdate();
         } catch (SQLException e) {
-            showError("Fetched Notifications");
+            showError("Click OK to get notifications");
         }
     }
 
@@ -359,7 +359,7 @@ private String[][] getInventoryDetails() {
     }
 
     private void showError(String message) {
-        JOptionPane.showMessageDialog(this, message, "Error", JOptionPane.ERROR_MESSAGE);
+        JOptionPane.showMessageDialog(this, message, "Alert", JOptionPane.ERROR_MESSAGE);
     }
 
     public static void main(String[] args) {
