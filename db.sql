@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS users (
     username VARCHAR(50) NOT NULL,
     password VARCHAR(50) NOT NULL,
     role ENUM('Admin', 'Store Manager', 'Cashier') NOT NULL
+    profile_photo_path VARCHAR(255) DEFAULT 'path/to/default/photo.jpg'
 );
 
 -- Create 'inventory' table if it doesn't exist
@@ -52,3 +53,19 @@ ALTER TABLE sales MODIFY item_code VARCHAR(20);
 ALTER TABLE sales
 ADD CONSTRAINT fk_sales_inventory
 FOREIGN KEY (item_code) REFERENCES inventory(item_code);
+CREATE TABLE IF NOT EXISTS sales (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    item_code VARCHAR(20) NOT NULL,
+    item_name VARCHAR(100) NOT NULL,
+    quantity INT NOT NULL,
+    total DOUBLE NOT NULL,
+    invoice_number VARCHAR(50),  -- Changed from INT to VARCHAR
+    sale_datetime TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    cashier_username VARCHAR(50) NOT NULL,
+    customer_name VARCHAR(100),
+    customer_phone VARCHAR(20),
+    FOREIGN KEY (item_code) REFERENCES inventory(item_code)
+);
+
+
+

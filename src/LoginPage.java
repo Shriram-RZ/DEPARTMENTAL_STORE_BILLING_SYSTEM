@@ -1,16 +1,16 @@
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
 import java.sql.*;
 
 public class LoginPage extends JFrame {
     private JTextField usernameField;
     private JPasswordField passwordField;
-    private JComboBox<String> roleBox;
+    private String role;
 
-    public LoginPage() {
-        setTitle("SASIKALA DEPARTMENTAL STORES");
-        setSize(400, 300);
+    public LoginPage(String role) {
+        this.role = role;
+        setTitle("DEPARTMENTAL STORES - " + role + " Login");
+        setSize(350, 200);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setupUI();
@@ -18,7 +18,8 @@ public class LoginPage extends JFrame {
     }
 
     private void setupUI() {
-        JPanel panel = new JPanel(new GridLayout(4, 2, 10, 10));
+        JPanel panel = new JPanel(new GridLayout(3, 2, 10, 10));
+        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
         panel.add(new JLabel("Username:"));
         usernameField = new JTextField();
@@ -28,14 +29,13 @@ public class LoginPage extends JFrame {
         passwordField = new JPasswordField();
         panel.add(passwordField);
 
-        panel.add(new JLabel("Role:"));
-        String[] roles = { "Admin", "Store Manager", "Cashier" };
-        roleBox = new JComboBox<>(roles);
-        panel.add(roleBox);
-
         JButton loginBtn = new JButton("Login");
         loginBtn.addActionListener(e -> handleLogin());
         panel.add(loginBtn);
+
+        JButton backBtn = new JButton("Back");
+        backBtn.addActionListener(e -> goBack());
+        panel.add(backBtn);
 
         add(panel, BorderLayout.CENTER);
     }
@@ -43,18 +43,17 @@ public class LoginPage extends JFrame {
     private void handleLogin() {
         String username = usernameField.getText();
         String password = new String(passwordField.getPassword());
-        String role = (String) roleBox.getSelectedItem();
 
         if (authenticateUser(username, password, role)) {
-            User user = new User(username, role); // Include role in User constructor
+            User user = new User(username, role);
             switch (role) {
-                case "Admin":
+                case "ADMIN":
                     new AdminDashboard(user);
                     break;
-                case "Store Manager":
+                case "STORE MANAGER":
                     new StoreManagerDashboard(user);
                     break;
-                case "Cashier":
+                case "CASHIER":
                     new CashierDashboard(user);
                     break;
             }
@@ -79,26 +78,8 @@ public class LoginPage extends JFrame {
         }
     }
 
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(LoginPage::new);
-    }
-}
-
-// Ensure the User class has the following structure:
-class User {
-    private String username;
-    private String role;
-
-    public User(String username, String role) {
-        this.username = username;
-        this.role = role;
-    }
-
-    public String getUsername() {
-        return username;
-    }
-
-    public String getRole() {
-        return role;
+    private void goBack() {
+        new LoginAsPage();
+        dispose();
     }
 }

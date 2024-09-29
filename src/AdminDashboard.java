@@ -144,7 +144,7 @@ public class AdminDashboard extends JFrame {
 
     private String[][] getSalesReports() {
     try (Connection conn = DatabaseConnection.getConnection()) {
-        String query = "SELECT * FROM sales ORDER BY sale_date DESC";
+        String query = "SELECT * FROM sales ORDER BY sale_datetime DESC";
         PreparedStatement stmt = conn.prepareStatement(query);
         ResultSet rs = stmt.executeQuery();
 
@@ -158,7 +158,7 @@ public class AdminDashboard extends JFrame {
             row[2] = rs.getString("item_name");
             row[3] = String.valueOf(rs.getInt("quantity"));
             row[4] = String.format("$%.2f", rs.getDouble("total"));
-            row[5] = rs.getTimestamp("sale_date").toString();
+            row[5] = rs.getTimestamp("sale_datetime").toString();
             row[6] = rs.getString("cashier_username");
             salesDataList.add(row);
         }
@@ -354,7 +354,7 @@ private String[][] getInventoryDetails() {
         int response = JOptionPane.showConfirmDialog(this, "Are you sure you want to log out?", "Confirm Logout", JOptionPane.YES_NO_OPTION);
         if (response == JOptionPane.YES_OPTION) {
             dispose(); // Close the current window
-            new LoginPage(); // Open the login page (assumes LoginPage class exists)
+            new LoginAsPage(); // Open the login page (assumes LoginPage class exists)
         }
     }
 
